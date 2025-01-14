@@ -58,10 +58,45 @@ const BillCalculator = () => {
     { value: "Other", watt: 0 },
   ];
 
+  const calculateSanctionedLoad = (appliances) => {
+    let totalLoad = 0;
+    appliances.forEach((appliance) => {
+      totalLoad += (appliance.power / 1000) * appliance.quantity;
+    });
+    return totalLoad;
+  };
+
+  const calculateBill = () => {
+    const ratePerKWh = puc;
+
+    if (isNaN(ratePerKWh) || ratePerKWh <= 0) {
+      alert("Please enter a valid Per Unit Cost.");
+      return;
+    }
+
+    let totalDailyConsumption = 0;
+
+    // Calculate total daily consumption
+    appliances.forEach((appliance) => {
+      const dailyConsumption = (appliance.power / 1000) * appliance.usage * appliance.quantity;
+      totalDailyConsumption += dailyConsumption;
+    });
+
+    const totalMonthlyConsumption = totalDailyConsumption * 30; // 30 days in a month
+    const monthlyBill = totalMonthlyConsumption * ratePerKWh;
+
+    // Calculate sanctioned load
+    const sanctionedLoad = calculateSanctionedLoad(appliances);
+
+    // Display results
+    document.getElementById("daily-consumption").innerText = `Total Daily Consumption: ${totalDailyConsumption.toFixed(2)} kWh`;
+    document.getElementById("monthly-consumption").innerText = `Total Monthly Consumption: ${totalMonthlyConsumption.toFixed(2)} kWh`;
+    document.getElementById("monthly-bill").innerText = `Approximate Monthly Bill: ₹${monthlyBill.toFixed(2)}`;
+    document.getElementById("sanctioned-load").innerText = `Recommended Sanctioned Load: ${sanctionedLoad.toFixed(2)} kW`;
+  };
+
   const handleApplianceChange = (event) => {
-    const selectedOption = applianceOptions.find(
-      (option) => option.value === event.target.value
-    );
+    const selectedOption = applianceOptions.find((option) => option.value === event.target.value);
     setSelectedAppliance(event.target.value);
     setPower(selectedOption.watt);
 
@@ -99,12 +134,8 @@ const BillCalculator = () => {
 
   return (
     <div className="container">
-      <h1>Electricity Consumption & Bill Calculator</h1>
-
       <div id="appliance-form">
-        <h2>Select Appliance</h2>
-
-        <label>Appliance</label>
+        <label>Select Appliance</label>
         <select value={selectedAppliance} onChange={handleApplianceChange}>
           {applianceOptions.map((option) => (
             <option key={option.value} value={option.value} data-watt={option.watt}>
@@ -178,8 +209,19 @@ const BillCalculator = () => {
           ))}
         </ul>
       </div>
+      
+      <button onClick={calculateBill}>Calculate Bill</button>
+
+      <div id="results">
+        <h2>Results</h2>
+        <p id="daily-consumption"></p>
+        <p id="monthly-consumption"></p>
+        <p id="monthly-bill"></p>
+        <p id="sanctioned-load"></p>
+      </div>
     </div>
   );
 };
 
 export default BillCalculator;
+
